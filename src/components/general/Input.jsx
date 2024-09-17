@@ -17,6 +17,7 @@ const Input = ({
     errorMessage = "",
     disabled = false,
     autoFocus = false,
+    required = false,
 }) => {
     return (
         <Container>
@@ -53,6 +54,7 @@ const Input = ({
                         // onBlur={onBlur}
                         // onChange={e => onChange(e.target.value, e.target.name)}
                         className={addClass}
+                        required={required}
                     />
                 )}
             </div>
