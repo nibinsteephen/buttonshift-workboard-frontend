@@ -78,11 +78,11 @@ function CreateWorkBoard() {
         validateOnBlur: true,
         validateOnMount: true,
         onSubmit: (values) => {
-            const workboardData = new FormData()
-            
-            workboardData.append('title', values.workboard_title)
-            workboardData.append('description', values.workboard_description)
-            workboardData.append('tasks', JSON.stringify(tasks))
+            const workboardData = new FormData();
+
+            workboardData.append("title", values.workboard_title);
+            workboardData.append("description", values.workboard_description);
+            workboardData.append("tasks", JSON.stringify(tasks));
 
             createWorkboard(workboardData);
             navigate("/workboard");
@@ -94,7 +94,7 @@ function CreateWorkBoard() {
             title: "",
             description: "",
             assigned_to: [],
-            status: "to-do",
+            status: "to_do",
         },
         validationSchema: taskValidationSchema,
         validateOnBlur: true,
@@ -161,12 +161,7 @@ function CreateWorkBoard() {
                                 }
                             />
                         </form>
-                        <Tasks
-                            onSubmit={(e) => {
-                                e.preventDefault(); // Prevent the default form behavior
-                                tempTaskCreation.handleSubmit(); // Call formik's submit handler
-                            }}
-                        >
+                        <Tasks>
                             {tasks &&
                                 tasks.map((item, key) => (
                                     <TemporaryTask
@@ -225,8 +220,8 @@ function CreateWorkBoard() {
                                         value={tempTaskCreation.values.status}
                                         onChange={tempTaskCreation.handleChange}
                                     >
-                                        <option value="to-do">To-do</option>
-                                        <option value="progress">
+                                        <option value="to_do">To-do</option>
+                                        <option value="in_progress">
                                             In Progress
                                         </option>
                                         <option value="completed">
@@ -236,7 +231,9 @@ function CreateWorkBoard() {
                                 </Dropdown>
                             </AddAtaskContainer>
                             {isExpanded ? (
-                                <Save type="submit">Save</Save>
+                                <Save onClick={tempTaskCreation.handleSubmit}>
+                                    Save
+                                </Save>
                             ) : (
                                 <AddTask type="button" onClick={viewAddTask}>
                                     + Add A Task
