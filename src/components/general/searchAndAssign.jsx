@@ -137,6 +137,9 @@ const SelectedUserContainer = styled.div`
         font-size: 16px;
         width: 100%;
         font-family: "Satoshi-Medium";
+        &::placeholder {
+                color: #6a7683a1;
+            }
     }
 `;
 

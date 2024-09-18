@@ -4,7 +4,7 @@ import UserInfo from "../components/general/UserInfo";
 import Input from "../components/general/Input";
 import ExitingTask from "../components/general/ExitingTask";
 import { useNavigate } from "react-router-dom";
-import { useFormik } from "formik";
+import { Formik, useFormik } from "formik";
 import * as Yup from "yup";
 import { appAuthConfig } from "../apis/apiconfig";
 import SearchAndAssign from "../components/general/searchAndAssign";
@@ -17,6 +17,7 @@ function CreateWorkBoard() {
     const taskContainerRef = useRef();
     const navigate = useNavigate();
     const assignInputRef = useRef();
+    const workboardFormRef = useRef(null);
 
     // api for Assiging users list
 
@@ -40,23 +41,57 @@ function CreateWorkBoard() {
         fetchUserList();
     }, []);
 
+    const createWorkboard = async (workboardData) => {
+        try {
+            const response = await appAuthConfig.post(
+                `/workboard/create-workboard/`,
+                workboardData
+            );
+        } catch (error) {}
+    };
+
     const viewAddTask = () => {
         setIsExpanded(true);
     };
 
-    const temptask = [];
+    const workboardValidationSchema = Yup.object().shape({
+        workboard_title: Yup.string().required("Workboard title is required"),
+        workboard_description: Yup.string().required(
+            "Workboard description is required"
+        ),
+    });
 
     const taskValidationSchema = Yup.object().shape({
-        task_title: Yup.string().required("Task title is required"),
+        title: Yup.string().required("Task title is required"),
         assigned_to: Yup.array()
             .min(1, "At least one user must be assigned")
             .required("Assigned to is required"),
         status: Yup.string().required("Status is required"),
     });
 
+    const createWorkBoard = useFormik({
+        initialValues: {
+            workboard_title: "",
+            workboard_description: "",
+        },
+        validationSchema: workboardValidationSchema,
+        validateOnBlur: true,
+        validateOnMount: true,
+        onSubmit: (values) => {
+            const workboardData = new FormData()
+            
+            workboardData.append('title', values.workboard_title)
+            workboardData.append('description', values.workboard_description)
+            workboardData.append('tasks', JSON.stringify(tasks))
+
+            createWorkboard(workboardData);
+            navigate("/workboard");
+        },
+    });
+
     const tempTaskCreation = useFormik({
         initialValues: {
-            task_title: "",
+            title: "",
             description: "",
             assigned_to: [],
             status: "to-do",
@@ -75,7 +110,7 @@ function CreateWorkBoard() {
     const handleAssignUsers = (selectedUsers) => {
         tempTaskCreation.setFieldValue("assigned_to", selectedUsers);
     };
-
+    console.log(tasks);
     return (
         <Container className="wrapper">
             <Head>
@@ -85,21 +120,57 @@ function CreateWorkBoard() {
                 <UserInfo name={"John Doe"} />
             </Head>
             <Content>
-                <CreateWorkSpace>
+                <CreateWorkSpace onSubmit={createWorkBoard.handleSubmit}>
                     <div className="seperator">
-                        <Input
-                            placeholder="Name your Board"
-                            addClass="WorkpaceTitle"
-                        />
-                        <Input
-                            placeholder="Board description"
-                            addClass="WorkpaceDescription"
-                        />
-                        <Tasks onSubmit={tempTaskCreation.handleSubmit}>
+                        <form
+                            ref={workboardFormRef}
+                            onSubmit={createWorkBoard.handleSubmit}
+                        >
+                            <Input
+                                placeholder="Name your Board"
+                                addClass="WorkpaceTitle"
+                                name="workboard_title"
+                                value={createWorkBoard.values.workboard_title}
+                                onChange={createWorkBoard.handleChange}
+                                onBlur={createWorkBoard.handleBlur(
+                                    "workboard_title"
+                                )}
+                                errorMessage={
+                                    createWorkBoard.touched.workboard_title
+                                        ? createWorkBoard.errors.workboard_title
+                                        : ""
+                                }
+                            />
+                            <Input
+                                placeholder="Board description"
+                                addClass="WorkpaceDescription"
+                                name="workboard_description"
+                                value={
+                                    createWorkBoard.values.workboard_description
+                                }
+                                onChange={createWorkBoard.handleChange}
+                                onBlur={createWorkBoard.handleBlur(
+                                    "workboard_description"
+                                )}
+                                errorMessage={
+                                    createWorkBoard.touched
+                                        .workboard_description
+                                        ? createWorkBoard.errors
+                                              .workboard_description
+                                        : ""
+                                }
+                            />
+                        </form>
+                        <Tasks
+                            onSubmit={(e) => {
+                                e.preventDefault(); // Prevent the default form behavior
+                                tempTaskCreation.handleSubmit(); // Call formik's submit handler
+                            }}
+                        >
                             {tasks &&
                                 tasks.map((item, key) => (
                                     <TemporaryTask
-                                        title={item.task_title}
+                                        title={item.title}
                                         status={item.status}
                                         users={item.assigned_to}
                                     />
@@ -110,16 +181,16 @@ function CreateWorkBoard() {
                             >
                                 <Input
                                     placeholder="Task Title"
-                                    name="task_title"
+                                    name="title"
                                     addClass="addTask"
-                                    value={tempTaskCreation.values.task_title}
+                                    value={tempTaskCreation.values.title}
                                     onChange={tempTaskCreation.handleChange}
                                     onBlur={tempTaskCreation.handleBlur(
-                                        "task_title"
+                                        "title"
                                     )}
                                     errorMessage={
-                                        tempTaskCreation.touched.task_title
-                                            ? tempTaskCreation.errors.task_title
+                                        tempTaskCreation.touched.title
+                                            ? tempTaskCreation.errors.title
                                             : ""
                                     }
                                 />
@@ -130,9 +201,23 @@ function CreateWorkBoard() {
                                     value={tempTaskCreation.values.description}
                                     onChange={tempTaskCreation.handleChange}
                                 />
-                                <SearchAndAssign
-                                    onAssignUsers={handleAssignUsers}
-                                />
+                                <div className="assignDropDown">
+                                    <SearchAndAssign
+                                        onAssignUsers={handleAssignUsers}
+                                    />
+                                    <div className="dropDownError">
+                                        {tempTaskCreation.touched.assigned_to &&
+                                            tempTaskCreation.errors
+                                                .assigned_to && (
+                                                <ErrorMessage>
+                                                    {
+                                                        tempTaskCreation.errors
+                                                            .assigned_to
+                                                    }
+                                                </ErrorMessage>
+                                            )}
+                                    </div>
+                                </div>
                                 <Dropdown>
                                     <select
                                         name="status"
@@ -159,7 +244,10 @@ function CreateWorkBoard() {
                             )}
                         </Tasks>
                     </div>
-                    <CreateButton onClick={() => navigate("/board")}>
+                    <CreateButton
+                        type="button"
+                        onClick={createWorkBoard.handleSubmit}
+                    >
                         Create Work Board
                     </CreateButton>
                 </CreateWorkSpace>
@@ -246,7 +334,23 @@ const AddAtaskContainer = styled.div`
     height: ${({ $isExpanded }) => ($isExpanded ? "280px" : "0")};
     overflow: hidden;
     padding: ${({ $isExpanded }) => ($isExpanded ? "20px" : "0")};
+    .assignDropDown {
+        position: relative;
+        .dropDownError {
+            position: absolute;
+            right: 0;
+        }
+    }
 `;
+
+const ErrorMessage = styled.p`
+    /* position: absolute; */
+    right: 0;
+    /* bottom: -18px; */
+    font-size: 12px;
+    color: red;
+`;
+
 const Dropdown = styled.div`
     margin-top: 10px;
     select {
