@@ -1,9 +1,60 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import UserInfo from "../components/general/UserInfo";
 import ExitingTask from "../components/general/ExitingTask";
+import { useParams } from "react-router-dom";
+import { appAuthConfig } from "../apis/apiconfig";
 
 function Board() {
+    const { workboard_id } = useParams();
+    const [workboardDetails, setWorkboardDetails] = useState({
+        title: "",
+        description: "",
+    });
+    const [tasks, setTasks] = useState([]);
+
+    // api for Workboard Details
+
+    const fetchWorkboardDetails = async () => {
+        try {
+            const { data } = await appAuthConfig.get(
+                `/workboard/workboard-details/${workboard_id}/`
+            );
+            if (data.StatusCode == 6000) {
+                setWorkboardDetails((prevState) => ({
+                    ...prevState,
+                    title: data.data.workboard_title,
+                    description: data.data.workboard_description,
+                }));
+            } else {
+                toast.error("Something went Wrong");
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    // api for tasks
+
+    const fetchTasks = async () => {
+        try {
+            const { data } = await appAuthConfig.get(
+                `/workboard/workboard-tasks/${workboard_id}/`
+            );
+            console.log(data);
+            if (data.StatusCode == 6000) {
+                setTasks(data.data.tasks);
+            } else {
+                toast.error("Something went Wrong");
+            }
+        } catch (error) {}
+    };
+
+    useEffect(() => {
+        fetchWorkboardDetails();
+        fetchTasks();
+    }, []);
+
     return (
         <Container className="wrapper">
             <Head>
@@ -13,34 +64,64 @@ function Board() {
                             My Workboards / &nbsp;
                         </a>
                         <a href="/board" className="large">
-                            My First WorkBoard
+                            {workboardDetails.title}
                         </a>
                     </BreadCrumbs>
                 </TopLeft>
                 <UserInfo name={"John Doe"} />
             </Head>
             <Content>
-                <Description>
-                    I made this board as an assignment for ButtonShift
-                </Description>
+                <Description>{workboardDetails.description}</Description>
                 <TaskSection>
-                    <EachSection >
+                    <EachSection>
                         <Title>To-Do’s</Title>
                         <CardContainer className="to-do">
-                            <ExitingTask title="My First Task" users={["Doe"]}/>
-                            <AddButton>+</AddButton>
+                            <div className="overflow">
+                                {tasks.map(
+                                    (item, key) =>
+                                        item.status == "to_do" && (
+                                            <ExitingTask
+                                                title={item.title}
+                                                users={item.assigned_users_name}
+                                            />
+                                        )
+                                )}
+                                <AddButton>+</AddButton>
+                            </div>
                         </CardContainer>
                     </EachSection>
                     <EachSection>
                         <Title>In Progress</Title>
                         <CardContainer className="in-progress">
-                            <AddButton>+</AddButton>
+                            <div className="overflow">
+                                {tasks.map(
+                                    (item, key) =>
+                                        item.status == "in_progress" && (
+                                            <ExitingTask
+                                                title={item.title}
+                                                users={item.assigned_users_name}
+                                            />
+                                        )
+                                )}
+                                <AddButton>+</AddButton>
+                            </div>
                         </CardContainer>
                     </EachSection>
                     <EachSection>
                         <Title>Completed</Title>
                         <CardContainer className="completed">
-                            <AddButton>+</AddButton>
+                            <div className="overflow">
+                                {tasks.map(
+                                    (item, key) =>
+                                        item.status == "completed" && (
+                                            <ExitingTask
+                                                title={item.title}
+                                                users={item.assigned_users_name}
+                                            />
+                                        )
+                                )}
+                                <AddButton>+</AddButton>
+                            </div>
                         </CardContainer>
                     </EachSection>
                 </TaskSection>
@@ -84,6 +165,7 @@ const BreadCrumbs = styled.div`
         color: #45464c;
         font-size: 28px;
         color: #2a407c;
+        text-transform: capitalize;
     }
 `;
 
@@ -98,7 +180,7 @@ const TaskSection = styled.div`
 const EachSection = styled.div`
     width: 32%;
     height: 100%;
-    .to-do{
+    .to-do {
         background-color: #e3e3e3;
     }
     .in-progress {
@@ -107,12 +189,11 @@ const EachSection = styled.div`
     .completed {
         background-color: #d1e7d2;
     }
-
 `;
 
 const Title = styled.p`
     color: #4c4c4c;
-    font-family: 'Satoshi-Bold';
+    font-family: "Satoshi-Bold";
     font-size: 22px;
 `;
 
@@ -121,6 +202,10 @@ const CardContainer = styled.div`
     margin-top: 15px;
     border-radius: 10px;
     padding: 10px;
+    .overflow {
+        height: 100%;
+        overflow-y: scroll;
+    }
 `;
 
 const AddButton = styled.div`

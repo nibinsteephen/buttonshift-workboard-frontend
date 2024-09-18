@@ -1,16 +1,79 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import UserInfo from "../components/general/UserInfo";
 import Input from "../components/general/Input";
 import ExitingTask from "../components/general/ExitingTask";
 import { useNavigate } from "react-router-dom";
+import { useFormik } from "formik";
+import * as Yup from "yup";
+import { appAuthConfig } from "../apis/apiconfig";
+import SearchAndAssign from "../components/general/searchAndAssign";
+import TemporaryTask from "../components/general/TemporaryTask";
 
 function CreateWorkBoard() {
     const [isExpanded, setIsExpanded] = useState(false);
+    const [usersList, setUsersList] = useState([]);
+    const [tasks, setTasks] = useState([]);
     const taskContainerRef = useRef();
-    const navigate  = useNavigate()
+    const navigate = useNavigate();
+    const assignInputRef = useRef();
+
+    // api for Assiging users list
+
+    const fetchUserList = async () => {
+        try {
+            const { data } = await appAuthConfig.get(
+                `/workboard/assign-users-list/`
+            );
+            if (data.StatusCode == 6000) {
+                setUsersList(data.data.data);
+                console.log(data.data.data);
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    useEffect(() => {
+        fetchUserList();
+    }, []);
+
     const viewAddTask = () => {
-        setIsExpanded(!isExpanded);
+        setIsExpanded(true);
+    };
+
+    const temptask = [];
+
+    const taskValidationSchema = Yup.object().shape({
+        task_title: Yup.string().required("Task title is required"),
+        assigned_to: Yup.array()
+            .min(1, "At least one user must be assigned")
+            .required("Assigned to is required"),
+        status: Yup.string().required("Status is required"),
+    });
+
+    const tempTaskCreation = useFormik({
+        initialValues: {
+            task_title: "",
+            description: "",
+            assigned_to: [],
+            status: "to-do",
+        },
+        validationSchema: taskValidationSchema,
+        validateOnBlur: true,
+        validateOnMount: true,
+
+        onSubmit: (values) => {
+            console.log(values);
+            setIsExpanded(false);
+            setTasks((prevTasks) => [...prevTasks, values]);
+        },
+    });
+
+    const handleAssignUsers = (selectedUsers) => {
+        tempTaskCreation.setFieldValue("assigned_to", selectedUsers);
     };
 
     return (
@@ -32,12 +95,15 @@ function CreateWorkBoard() {
                             placeholder="Board description"
                             addClass="WorkpaceDescription"
                         />
-                        <Tasks>
-                            <ExitingTask
-                                title={"Complete ButtonShift Assignment"}
-                                status={"To-do"}
-                                users={["John Doe","Doe"]}
-                            />
+                        <Tasks onSubmit={tempTaskCreation.handleSubmit}>
+                            {tasks &&
+                                tasks.map((item, key) => (
+                                    <TemporaryTask
+                                        title={item.task_title}
+                                        status={item.status}
+                                        users={item.assigned_to}
+                                    />
+                                ))}
                             <AddAtaskContainer
                                 ref={taskContainerRef}
                                 $isExpanded={isExpanded}
@@ -46,19 +112,34 @@ function CreateWorkBoard() {
                                     placeholder="Task Title"
                                     name="task_title"
                                     addClass="addTask"
+                                    value={tempTaskCreation.values.task_title}
+                                    onChange={tempTaskCreation.handleChange}
+                                    onBlur={tempTaskCreation.handleBlur(
+                                        "task_title"
+                                    )}
+                                    errorMessage={
+                                        tempTaskCreation.touched.task_title
+                                            ? tempTaskCreation.errors.task_title
+                                            : ""
+                                    }
                                 />
                                 <Input
                                     placeholder="Task Description (Optional)"
                                     name="description"
                                     addClass="addTask"
+                                    value={tempTaskCreation.values.description}
+                                    onChange={tempTaskCreation.handleChange}
                                 />
-                                <Input
-                                    placeholder="Assign others with @"
-                                    name="assign"
-                                    addClass="addTask"
+                                <SearchAndAssign
+                                    onAssignUsers={handleAssignUsers}
                                 />
                                 <Dropdown>
-                                    <select name="status" id="status">
+                                    <select
+                                        name="status"
+                                        id="status"
+                                        value={tempTaskCreation.values.status}
+                                        onChange={tempTaskCreation.handleChange}
+                                    >
                                         <option value="to-do">To-do</option>
                                         <option value="progress">
                                             In Progress
@@ -70,15 +151,17 @@ function CreateWorkBoard() {
                                 </Dropdown>
                             </AddAtaskContainer>
                             {isExpanded ? (
-                                <AddTask onClick={viewAddTask}>Save</AddTask>
+                                <Save type="submit">Save</Save>
                             ) : (
-                                <AddTask onClick={viewAddTask}>
+                                <AddTask type="button" onClick={viewAddTask}>
                                     + Add A Task
                                 </AddTask>
                             )}
                         </Tasks>
                     </div>
-                    <CreateButton onClick={()=>navigate("/board")}>Create Work Board</CreateButton>
+                    <CreateButton onClick={() => navigate("/board")}>
+                        Create Work Board
+                    </CreateButton>
                 </CreateWorkSpace>
             </Content>
         </Container>
@@ -122,7 +205,18 @@ const CreateWorkSpace = styled.div`
         overflow: scroll;
     }
 `;
-const Tasks = styled.div``;
+const Tasks = styled.form``;
+const Save = styled.button`
+    width: 100%;
+    font-size: 20px;
+    border: 1px solid #bdbdbd;
+    padding: 10px 20px;
+    color: #bdbdbd;
+    border-radius: 10px;
+    margin-top: 10px;
+    cursor: pointer;
+`;
+
 const AddTask = styled.button`
     width: 100%;
     font-size: 20px;

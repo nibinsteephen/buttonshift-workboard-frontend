@@ -1,11 +1,31 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import UserInfo from "../components/general/UserInfo";
 import { useNavigate } from "react-router-dom";
 import Card from "../components/general/Card";
+import { useAuthStore } from "../store/useAuthStore";
+import axios from "axios";
+import { appAuthConfig, appConfig } from "../apis/apiconfig";
 
 function Workboard() {
     const navigate = useNavigate();
+    const { accessToken } = useAuthStore();
+    const [workboard, setWorkboard] = useState([]);
+
+    // api call
+
+    const fetchworkboards = async () => {
+        try {
+            const { data } = await appAuthConfig.get(`/workboard/workboards/`);
+            console.log(data.data.workboard);
+            setWorkboard(data.data.workboard);
+        } catch (error) {}
+    };
+
+    useEffect(() => {
+        fetchworkboards();
+    }, []);
+
     return (
         <Container className="wrapper">
             <Head>
@@ -13,17 +33,21 @@ function Workboard() {
                     <h2>My WorkBoards</h2>
                     <p>Assigned to Me</p>
                 </TopLeft>
-                <UserInfo name={"John Doe"} />
+                <UserInfo />
             </Head>
             <Content>
                 <AddWorkboard onClick={() => navigate("/create-workboard")}>
                     <span>+</span>
                 </AddWorkboard>
-                <Card
-                    title={"My First WorkBoard"}
-                    taskNumber={1}
-                    users={["Ohn Doe", "Hn Doe", "N Doe", "J Doe"]}
-                />
+                {workboard &&
+                    workboard.map((item, key) => (
+                        <Card
+                            workboard_id={item.id}
+                            title={item.title}
+                            taskNumber={item.number_of_tasks}
+                            users={item.users_list}
+                        />
+                    ))}
             </Content>
         </Container>
     );

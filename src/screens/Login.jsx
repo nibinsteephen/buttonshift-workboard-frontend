@@ -32,6 +32,7 @@ function Login() {
                 )
                 setLoader(false);
                 toast.success(response.data.message);
+                navigate("/workboard");
             } else {
                 toast.error(response.data.message);
                 setLoader(false);
@@ -57,6 +58,7 @@ function Login() {
                     value={password}
                     required={true}
                     onChange={(e) => setPassword(e.target.value)}
+                    type="password"
                 />
                 <div className="button-container">
                     <LoginButton type="submit">

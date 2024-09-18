@@ -11,7 +11,7 @@ const Input = ({
     isReadOnly = false,
     isLoading = false,
     isTextArea = false,
-    onBlur = "",
+    onBlur,
     addClass = "",
     onChange = (value = "", name = "") => {},
     errorMessage = "",
@@ -51,7 +51,7 @@ const Input = ({
                         placeholder={placeholder}
                         onChange={onChange}
                         disabled={disabled}
-                        // onBlur={onBlur}
+                        onBlur={onBlur}
                         // onChange={e => onChange(e.target.value, e.target.name)}
                         className={addClass}
                         required={required}

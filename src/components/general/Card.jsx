@@ -2,12 +2,14 @@ import React from "react";
 import styled from "styled-components";
 import UserInfo from "./UserInfo";
 import Avatar from "./Avatar";
+import { useNavigate } from "react-router-dom";
 
-function Card({ title, taskNumber, users }) {
+function Card({ title, taskNumber, users, key, workboard_id }) {
+    const navigate = useNavigate()
     const maxVisibleAvatars = 2;
 
     return (
-        <Container>
+        <Container key={key} onClick={() => navigate(`/workboard/${workboard_id}`)}>
             <h4>{title}</h4>
             <Details>
                 <p>{taskNumber} Task</p>
@@ -36,12 +38,14 @@ const Container = styled.div`
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    cursor: pointer;
     h4 {
         font-size: 25px;
         width: 100%;
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
+        text-transform: capitalize;
     }
 `;
 const Details = styled.div`

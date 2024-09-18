@@ -2,11 +2,11 @@ import React from "react";
 import styled from "styled-components";
 import Avatar from "./Avatar";
 
-function ExitingTask({title,status,users=[],className}) {
+function TemporaryTask({title,status,users=[],className},key) {
     const maxVisibleAvatars = 2;
     console.log(users,"USERSSS")
     return (
-        <Container>
+        <Container key={key}>
             <p className="edit">Edit</p>
             <Content>
                 <h5>{title}</h5>
@@ -16,7 +16,7 @@ function ExitingTask({title,status,users=[],className}) {
                         {users.slice(0, maxVisibleAvatars).map((users, key) => (
                             <Avatar
                                 key={key}
-                                name={users}
+                                name={users.full_name}
                                 type={"small"}
                             />
                         ))}
@@ -32,7 +32,7 @@ function ExitingTask({title,status,users=[],className}) {
     );
 }
 
-export default ExitingTask;
+export default TemporaryTask;
 
 const Container = styled.div`
     background-color: #d5ade4;
