@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import styled from "styled-components";
 import Avatar from "./Avatar";
 import EditTask from "./EditTask";
+import { Draggable } from "react-beautiful-dnd";
 
 function ExitingTask(
     {
@@ -13,6 +14,7 @@ function ExitingTask(
         className,
         taskid,
         onComplete,
+        index,
     },
     key
 ) {
@@ -35,55 +37,64 @@ function ExitingTask(
     } else if (status == "in_progress") {
         display_status = "In Progress";
     } else if (status == "completed") {
-        display_status = "Completed";   
+        display_status = "Completed";
     }
 
     return (
-        <Container taskid={taskid} key={key} $isEdit={isEdit}>
-            {!isEdit && (
-                <div>
-                    <p className="edit" onClick={handleEdit}>
-                        Edit
-                    </p>
-                    <Content>
-                        <h5>{title}</h5>
-                        {
-                            <BottomContent className={className}>
-                                <p className="status">{display_status}</p>
-                                <Users>
-                                    {users
-                                        .slice(0, maxVisibleAvatars)
-                                        .map((users, key) => (
-                                            <Avatar
-                                                key={key}
-                                                name={users}
-                                                type={"small"}
-                                            />
-                                        ))}
-                                    {users.length > maxVisibleAvatars && (
-                                        <RemainingCount>
-                                            +{users.length - maxVisibleAvatars}
-                                        </RemainingCount>
-                                    )}
-                                </Users>
-                            </BottomContent>
-                        }
-                    </Content>
-                </div>
+        <Draggable draggableId={taskid.toString()} index={index}>
+            {(provided) => (
+                <Container taskid={taskid} key={key} $isEdit={isEdit} {...provided.draggableProps} {...provided.dragHandleProps} ref={provided.innerRef}>
+                    {!isEdit && (
+                        <div>
+                            <p className="edit" onClick={handleEdit}>
+                                Edit
+                            </p>
+                            <Content>
+                                <h5>{title}</h5>
+                                {
+                                    <BottomContent className={className}>
+                                        <p className="status">
+                                            {display_status}
+                                        </p>
+                                        <Users>
+                                            {users
+                                                .slice(0, maxVisibleAvatars)
+                                                .map((users, key) => (
+                                                    <Avatar
+                                                        key={key}
+                                                        name={users}
+                                                        type={"small"}
+                                                    />
+                                                ))}
+                                            {users.length >
+                                                maxVisibleAvatars && (
+                                                <RemainingCount>
+                                                    +
+                                                    {users.length -
+                                                        maxVisibleAvatars}
+                                                </RemainingCount>
+                                            )}
+                                        </Users>
+                                    </BottomContent>
+                                }
+                            </Content>
+                        </div>
+                    )}
+                    {isEdit && (
+                        <EditTask
+                            onEdit={true}
+                            onCancel={() => setIsEdit(false)}
+                            title={title}
+                            description={description}
+                            taskStatus={status}
+                            assigned_to={assigned_to}
+                            taskid={taskid}
+                            onSave={handleOnSave}
+                        />
+                    )}
+                </Container>
             )}
-            {isEdit && (
-                <EditTask
-                    onEdit={true}
-                    onCancel={() => setIsEdit(false)}
-                    title={title}
-                    description={description}
-                    taskStatus={status}
-                    assigned_to={assigned_to}
-                    taskid={taskid}
-                    onSave={handleOnSave}
-                />
-            )}
-        </Container>
+        </Draggable>
     );
 }
 

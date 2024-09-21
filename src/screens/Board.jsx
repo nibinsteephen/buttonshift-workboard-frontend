@@ -5,13 +5,18 @@ import ExitingTask from "../components/general/ExitingTask";
 import { useParams } from "react-router-dom";
 import { appAuthConfig } from "../apis/apiconfig";
 import AddTask from "../components/general/AddTask";
-import { Droppable } from "react-beautiful-dnd";
+import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
+import { toast } from "react-toastify";
 
 function Board() {
     const { workboard_id } = useParams();
     const [workboardDetails, setWorkboardDetails] = useState({
         title: "",
         description: "",
+    });
+    const [dragTask, setDragtask] = useState({
+        task_id: "",
+        status: "",
     });
     const [tasks, setTasks] = useState([]);
 
@@ -55,7 +60,66 @@ function Board() {
         fetchWorkboardDetails();
         fetchTasks();
     }, []);
-    console.log(tasks)
+
+    const editTask = async (formdata) => {
+        console.log(formdata,"EDITT TASK API")
+        try {
+            const { data } = await appAuthConfig.post(
+                `/workboard/edit-task/`,
+                formdata,
+            );
+            if (data.StatusCode == 6000) {
+                toast.success("Task Edited successfully");
+                fetchTasks()
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    const onDragEnd = (result) => {
+        console.log(result, "RESULT");
+        const { source, destination, draggableId } = result;
+
+        if (source.droppableId === destination.droppableId || !destination){
+            return
+        }
+
+        const updatedTask = {
+            task_id: draggableId,
+            status: destination.droppableId,
+        };
+        console.log(updatedTask,"UPDOPAPDOPODAPADOD")
+    
+        editTask(updatedTask);
+
+        // }else if(destination.droppableId === "to_do"){
+        //     console.log("You are at todo")
+        //     setDragtask((prevState) => ({
+        //         ...prevState,
+        //         task_id: draggableId,
+        //         status: destination.droppableId,
+        //     }));
+        // }else if(destination.droppableId === "in_progress"){
+        //     console.log("You are at InProgress")
+        //     setDragtask((prevState) => ({
+        //         ...prevState,
+        //         task_id: draggableId,
+        //         status: destination.droppableId,
+        //     }));
+        // }else if(destination.droppableId === "completed"){
+        //     console.log("You are at Completed")
+        //     setDragtask((prevState) => ({
+        //         ...prevState,
+        //         task_id: draggableId,
+        //         status: destination.droppableId,
+        //     }));
+        // }
+        // editTask(dragTask)
+
+    };
 
     return (
         <Container className="wrapper">
@@ -74,92 +138,150 @@ function Board() {
             </Head>
             <Content>
                 <Description>{workboardDetails.description}</Description>
-                <TaskSection>
-                    <EachSection>
-                        <Title>To-Do’s</Title>
-                        <CardContainer className="to-do">
-                            <div className="overflow">
-                                {tasks.map(
-                                    (item, key) =>
-                                        item.status == "to_do" && (
-                                            <ExitingTask
-                                                key={key}
-                                                taskid={item.task_id}
-                                                title={item.title}
-                                                users={item.assigned_users_name}
-                                                description={item.description}
-                                                assigned_to={
-                                                    item.assigned_users_id
-                                                }
-                                                status={item.status}
-                                                onComplete={fetchTasks}
+                <DragDropContext onDragEnd={onDragEnd}>
+                    <TaskSection>
+                        <EachSection>
+                            <Title>To-Do’s</Title>
+                            <Droppable droppableId="to_do">
+                                {(provided) => (
+                                    <CardContainer
+                                        className="to-do"
+                                        ref={provided.innerRef}
+                                        {...provided.droppableProps}
+                                    >
+                                        <div className="overflow">
+                                            {tasks.map(
+                                                (item, index) =>
+                                                    item.status == "to_do" && (
+                                                        <ExitingTask
+                                                            index={index}
+                                                            key={index}
+                                                            taskid={
+                                                                item.task_id
+                                                            }
+                                                            title={item.title}
+                                                            users={
+                                                                item.assigned_users_name
+                                                            }
+                                                            description={
+                                                                item.description
+                                                            }
+                                                            assigned_to={
+                                                                item.assigned_users_id
+                                                            }
+                                                            status={item.status}
+                                                            onComplete={
+                                                                fetchTasks
+                                                            }
+                                                        />
+                                                    )
+                                            )}
+                                            <AddTask
+                                                fetchTasks={fetchTasks}
+                                                taskStatus="to_do"
                                             />
-                                        )
+                                        </div>
+                                        {provided.placeholder}
+                                    </CardContainer>
                                 )}
-                                <AddTask
-                                    fetchTasks={fetchTasks}
-                                    taskStatus="to_do"
-                                />
-                            </div>
-                        </CardContainer>
-                    </EachSection>
-                    <EachSection>
-                        <Title>In Progress</Title>
-                        <CardContainer className="in-progress">
-                            <div className="overflow">
-                                {tasks.map(
-                                    (item, key) =>
-                                        item.status == "in_progress" && (
-                                            <ExitingTask
-                                                key={key}
-                                                taskid={item.task_id}
-                                                title={item.title}
-                                                users={item.assigned_users_name}
-                                                description={item.description}
-                                                assigned_to={
-                                                    item.assigned_users_id
-                                                }
-                                                status={item.status}
-                                                onComplete={fetchTasks}
+                            </Droppable>
+                        </EachSection>
+                        <EachSection>
+                            <Title>In Progress</Title>
+                            <Droppable droppableId="in_progress">
+                                {(provided) => (
+                                    <CardContainer
+                                        className="in-progress"
+                                        ref={provided.innerRef}
+                                        {...provided.droppableProps}
+                                    >
+                                        <div className="overflow">
+                                            {tasks.map(
+                                                (item, index) =>
+                                                    item.status ==
+                                                        "in_progress" && (
+                                                        <ExitingTask
+                                                            index={index}
+                                                            key={index}
+                                                            taskid={
+                                                                item.task_id
+                                                            }
+                                                            title={item.title}
+                                                            users={
+                                                                item.assigned_users_name
+                                                            }
+                                                            description={
+                                                                item.description
+                                                            }
+                                                            assigned_to={
+                                                                item.assigned_users_id
+                                                            }
+                                                            status={item.status}
+                                                            onComplete={
+                                                                fetchTasks
+                                                            }
+                                                        />
+                                                    )
+                                            )}
+                                            <AddTask
+                                                fetchTasks={fetchTasks}
+                                                taskStatus="in_progress"
                                             />
-                                        )
+                                        </div>
+                                        {provided.placeholder}
+                                    </CardContainer>
                                 )}
-                                <AddTask
-                                    fetchTasks={fetchTasks}
-                                    taskStatus="in_progress"
-                                />
-                            </div>
-                        </CardContainer>
-                    </EachSection>
-                    <EachSection>
-                        <Title>Completed</Title>
-                        <CardContainer className="completed">
-                            <div className="overflow">
-                                {tasks.map(
-                                    (item, key) =>
-                                        item.status == "completed" && (
-                                            <ExitingTask
-                                                key={key}
-                                                taskid={item.task_id}
-                                                title={item.title}
-                                                users={item.assigned_users_name}
-                                                description={item.description}
-                                                assigned_to={
-                                                    item.assigned_users_id
-                                                }
-                                                status={item.status}
-                                                onComplete={fetchTasks}
+                            </Droppable>
+                        </EachSection>
+                        <EachSection>
+                            <Title>Completed</Title>
+                            <Droppable droppableId="completed">
+                                {(provided) => (
+                                    <CardContainer
+                                        className="completed"
+                                        ref={provided.innerRef}
+                                        {...provided.droppableProps}
+                                    >
+                                        <div className="overflow">
+                                            {tasks.map(
+                                                (item, index) =>
+                                                    item.status ==
+                                                        "completed" && (
+                                                        <ExitingTask
+                                                            key={index}
+                                                            index={index}
+                                                            taskid={
+                                                                item.task_id
+                                                            }
+                                                            title={item.title}
+                                                            users={
+                                                                item.assigned_users_name
+                                                            }
+                                                            description={
+                                                                item.description
+                                                            }
+                                                            assigned_to={
+                                                                item.assigned_users_id
+                                                            }
+                                                            status={item.status}
+                                                            onComplete={
+                                                                fetchTasks
+                                                            }
+                                                        />
+                                                    )
+                                            )}
+                                            <AddTask
+                                                fetchTasks={fetchTasks}
+                                                taskStatus="completed"
                                             />
-                                        )
+                                        </div>
+                                        {provided.placeholder}
+                                    </CardContainer>
                                 )}
-                                <AddTask
-                                    fetchTasks={fetchTasks}
-                                    taskStatus="completed"
-                                />
-                            </div>
-                        </CardContainer>
-                    </EachSection>
-                </TaskSection>
+                            </Droppable>
+                        </EachSection>
+                    </TaskSection>
+                </DragDropContext>
             </Content>
         </Container>
     );
