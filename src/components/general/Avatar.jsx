@@ -35,5 +35,6 @@ const Container = styled.div`
         font-family: "Satoshi-Bold";
         color: #b1b3bd;
         font-size: ${({type})=>(type ? "13px" : "25px" )};
+        text-transform: capitalize;
     }
 `;

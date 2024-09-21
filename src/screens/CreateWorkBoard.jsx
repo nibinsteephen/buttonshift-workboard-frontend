@@ -4,42 +4,19 @@ import UserInfo from "../components/general/UserInfo";
 import Input from "../components/general/Input";
 import ExitingTask from "../components/general/ExitingTask";
 import { useNavigate } from "react-router-dom";
-import { Formik, useFormik } from "formik";
+import {  useFormik } from "formik";
 import * as Yup from "yup";
 import { appAuthConfig } from "../apis/apiconfig";
 import SearchAndAssign from "../components/general/searchAndAssign";
 import TemporaryTask from "../components/general/TemporaryTask";
+import { toast } from "react-toastify";
 
 function CreateWorkBoard() {
     const [isExpanded, setIsExpanded] = useState(false);
-    const [usersList, setUsersList] = useState([]);
     const [tasks, setTasks] = useState([]);
     const taskContainerRef = useRef();
     const navigate = useNavigate();
-    const assignInputRef = useRef();
     const workboardFormRef = useRef(null);
-
-    // api for Assiging users list
-
-    const fetchUserList = async () => {
-        try {
-            const { data } = await appAuthConfig.get(
-                `/workboard/assign-users-list/`
-            );
-            if (data.StatusCode == 6000) {
-                setUsersList(data.data.data);
-                console.log(data.data.data);
-            } else {
-                toast.error(data.message);
-            }
-        } catch (error) {
-            console.log(error);
-        }
-    };
-
-    useEffect(() => {
-        fetchUserList();
-    }, []);
 
     const createWorkboard = async (workboardData) => {
         try {
@@ -47,8 +24,18 @@ function CreateWorkBoard() {
                 `/workboard/create-workboard/`,
                 workboardData
             );
-        } catch (error) {}
+            console.log(response.data.StatuCode);
+            if (response.data.StatusCode == 6000) {
+                navigate("/workboard");
+                toast.success("Workboard created successfully");
+            }else{
+                toast.error(response.data.message);
+            }
+        } catch (error) {
+            console.log(error)
+        }
     };
+    console.log(tasks)
 
     const viewAddTask = () => {
         setIsExpanded(true);
@@ -85,7 +72,6 @@ function CreateWorkBoard() {
             workboardData.append("tasks", JSON.stringify(tasks));
 
             createWorkboard(workboardData);
-            navigate("/workboard");
         },
     });
 
@@ -110,7 +96,7 @@ function CreateWorkBoard() {
     const handleAssignUsers = (selectedUsers) => {
         tempTaskCreation.setFieldValue("assigned_to", selectedUsers);
     };
-    console.log(tasks);
+
     return (
         <Container className="wrapper">
             <Head>

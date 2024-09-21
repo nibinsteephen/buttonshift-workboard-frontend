@@ -2,10 +2,10 @@ import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { appAuthConfig } from "../../apis/apiconfig";
 
-function SearchAndAssign({onAssignUsers}) {
+function SearchAndAssign({onAssignUsers, assigned_to}) {
     const [usersList, setUsersList] = useState([]);
     const [filteredUsers, setFilteredUsers] = useState([]);
-    const [selectedUsers, setSelectedUsers] = useState([]);
+    const [selectedUsers, setSelectedUsers] = useState(assigned_to || []);
     const assignInputRef = useRef();
 
     // Fetch the users list from the API
@@ -25,6 +25,14 @@ function SearchAndAssign({onAssignUsers}) {
     useEffect(() => {
         fetchUserList();
     }, []);
+
+    useEffect(() => {
+        if (assigned_to) {
+            setSelectedUsers(assigned_to);
+            onAssignUsers(assigned_to);
+        }
+    }, []);
+
 
     // Enforce the input always starts with @
     const enforceAtSign = (inputValue) => {
@@ -137,6 +145,7 @@ const SelectedUserContainer = styled.div`
         font-size: 16px;
         width: 100%;
         font-family: "Satoshi-Medium";
+        margin-bottom: 10px;
         &::placeholder {
                 color: #6a7683a1;
             }
@@ -150,6 +159,7 @@ const SelectedUser = styled.div`
     display: flex;
     align-items: center;
     gap: 5px;
+    text-transform: capitalize;
 `;
 
 const RemoveButton = styled.span`

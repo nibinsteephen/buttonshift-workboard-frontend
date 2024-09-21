@@ -4,6 +4,7 @@ import UserInfo from "../components/general/UserInfo";
 import ExitingTask from "../components/general/ExitingTask";
 import { useParams } from "react-router-dom";
 import { appAuthConfig } from "../apis/apiconfig";
+import AddTask from "../components/general/AddTask";
 
 function Board() {
     const { workboard_id } = useParams();
@@ -41,7 +42,6 @@ function Board() {
             const { data } = await appAuthConfig.get(
                 `/workboard/workboard-tasks/${workboard_id}/`
             );
-            console.log(data);
             if (data.StatusCode == 6000) {
                 setTasks(data.data.tasks);
             } else {
@@ -54,6 +54,7 @@ function Board() {
         fetchWorkboardDetails();
         fetchTasks();
     }, []);
+    console.log(tasks)
 
     return (
         <Container className="wrapper">
@@ -81,12 +82,23 @@ function Board() {
                                     (item, key) =>
                                         item.status == "to_do" && (
                                             <ExitingTask
+                                                key={key}
+                                                taskid={item.task_id}
                                                 title={item.title}
                                                 users={item.assigned_users_name}
+                                                description={item.description}
+                                                assigned_to={
+                                                    item.assigned_users_id
+                                                }
+                                                status={item.status}
+                                                onComplete={fetchTasks}
                                             />
                                         )
                                 )}
-                                <AddButton>+</AddButton>
+                                <AddTask
+                                    fetchTasks={fetchTasks}
+                                    taskStatus="to_do"
+                                />
                             </div>
                         </CardContainer>
                     </EachSection>
@@ -98,12 +110,23 @@ function Board() {
                                     (item, key) =>
                                         item.status == "in_progress" && (
                                             <ExitingTask
+                                                key={key}
+                                                taskid={item.task_id}
                                                 title={item.title}
                                                 users={item.assigned_users_name}
+                                                description={item.description}
+                                                assigned_to={
+                                                    item.assigned_users_id
+                                                }
+                                                status={item.status}
+                                                onComplete={fetchTasks}
                                             />
                                         )
                                 )}
-                                <AddButton>+</AddButton>
+                                <AddTask
+                                    fetchTasks={fetchTasks}
+                                    taskStatus="in_progress"
+                                />
                             </div>
                         </CardContainer>
                     </EachSection>
@@ -115,12 +138,23 @@ function Board() {
                                     (item, key) =>
                                         item.status == "completed" && (
                                             <ExitingTask
+                                                key={key}
+                                                taskid={item.task_id}
                                                 title={item.title}
                                                 users={item.assigned_users_name}
+                                                description={item.description}
+                                                assigned_to={
+                                                    item.assigned_users_id
+                                                }
+                                                status={item.status}
+                                                onComplete={fetchTasks}
                                             />
                                         )
                                 )}
-                                <AddButton>+</AddButton>
+                                <AddTask
+                                    fetchTasks={fetchTasks}
+                                    taskStatus="completed"
+                                />
                             </div>
                         </CardContainer>
                     </EachSection>

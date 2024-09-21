@@ -4,7 +4,7 @@ import Avatar from "./Avatar";
 
 function TemporaryTask({title,status,users=[],className},key) {
     const maxVisibleAvatars = 2;
-    console.log(users,"USERSSS")
+
     return (
         <Container key={key}>
             <p className="edit">Edit</p>
