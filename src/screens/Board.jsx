@@ -5,6 +5,7 @@ import ExitingTask from "../components/general/ExitingTask";
 import { useParams } from "react-router-dom";
 import { appAuthConfig } from "../apis/apiconfig";
 import AddTask from "../components/general/AddTask";
+import { Droppable } from "react-beautiful-dnd";
 
 function Board() {
     const { workboard_id } = useParams();

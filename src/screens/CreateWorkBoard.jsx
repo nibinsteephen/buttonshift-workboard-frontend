@@ -4,7 +4,7 @@ import UserInfo from "../components/general/UserInfo";
 import Input from "../components/general/Input";
 import ExitingTask from "../components/general/ExitingTask";
 import { useNavigate } from "react-router-dom";
-import {  useFormik } from "formik";
+import { useFormik } from "formik";
 import * as Yup from "yup";
 import { appAuthConfig } from "../apis/apiconfig";
 import SearchAndAssign from "../components/general/searchAndAssign";
@@ -17,6 +17,7 @@ function CreateWorkBoard() {
     const taskContainerRef = useRef();
     const navigate = useNavigate();
     const workboardFormRef = useRef(null);
+    const [taskCounter, setTaskCounter] = useState(1);
 
     const createWorkboard = async (workboardData) => {
         try {
@@ -28,14 +29,14 @@ function CreateWorkBoard() {
             if (response.data.StatusCode == 6000) {
                 navigate("/workboard");
                 toast.success("Workboard created successfully");
-            }else{
+                setTaskCounter(1);
+            } else {
                 toast.error(response.data.message);
             }
         } catch (error) {
-            console.log(error)
+            console.log(error);
         }
     };
-    console.log(tasks)
 
     const viewAddTask = () => {
         setIsExpanded(true);
@@ -77,6 +78,7 @@ function CreateWorkBoard() {
 
     const tempTaskCreation = useFormik({
         initialValues: {
+            task_id: "",
             title: "",
             description: "",
             assigned_to: [],
@@ -87,14 +89,38 @@ function CreateWorkBoard() {
         validateOnMount: true,
 
         onSubmit: (values) => {
-            console.log(values);
+            const tempTaskWithId = {
+                ...values,
+                task_id: taskCounter,
+            };
             setIsExpanded(false);
-            setTasks((prevTasks) => [...prevTasks, values]);
+            setTasks((prevTasks) => [...prevTasks, tempTaskWithId]);
+            setTaskCounter(taskCounter + 1);
         },
     });
 
     const handleAssignUsers = (selectedUsers) => {
         tempTaskCreation.setFieldValue("assigned_to", selectedUsers);
+    };
+
+    // Handling temporary tasks edit
+
+    const handleEditTask = (editedTempTask) => {;
+
+        if (editedTempTask) {
+
+            const updatedTasks = tasks.map((task) => {
+
+                if (task.task_id == editedTempTask.task_id) {
+                    return {
+                        ...task,
+                        ...editedTempTask,
+                    };
+                }
+                return task;
+            });
+            setTasks(updatedTasks);
+        }
     };
 
     return (
@@ -151,9 +177,14 @@ function CreateWorkBoard() {
                             {tasks &&
                                 tasks.map((item, key) => (
                                     <TemporaryTask
+                                        key={key}
                                         title={item.title}
                                         status={item.status}
                                         users={item.assigned_to}
+                                        description={item.description}
+                                        assigned_to={item.assigned_to}
+                                        taskid={item.task_id}
+                                        onComplete={handleEditTask}
                                     />
                                 ))}
                             <AddAtaskContainer

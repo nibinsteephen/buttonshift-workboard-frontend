@@ -54,7 +54,7 @@ function AddTask({fetchTasks, taskStatus,}) {
         validateOnBlur: true,
         validateOnMount: true,
 
-        onSubmit: (values) => {
+        onSubmit: (values,{ resetForm }) => {
             console.log(values);
             setIsExpanded(false);
             const formdata = new FormData();
@@ -65,7 +65,21 @@ function AddTask({fetchTasks, taskStatus,}) {
             formdata.append("workboard_id", workboard_id);
             formdata.append("assigned_to", JSON.stringify(values.assigned_to));
 
-            addNewtask(formdata)
+            // addNewtask(formdata)
+            addNewtask(formdata).then(() => {
+                // After successfully adding the new task, reset the form
+                resetForm({
+                    values: {
+                        title: "",
+                        description: "",
+                        assigned_to: [],
+                        status: taskStatus, // Keep the status as the initial value
+                        workboard_id: workboard_id, // Keep workboard_id as well
+                    },
+                });
+            });
+            handleAssignUsers([])
+            
         },
     });
 
@@ -189,7 +203,7 @@ const ErrorMessage = styled.p`
 const Dropdown = styled.div`
     margin-top: 10px;
     select {
-        cursor: pointer;
+        cursor: not-allowed;
         padding: 10px;
         border-radius: 5px;
         font-size: 14px;

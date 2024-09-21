@@ -19,9 +19,11 @@ function EditTask({
     status,
     assigned_to,
     taskid,
+    editTypeTempTask = false,
 }) {
     const [isExpanded, setIsExpanded] = useState(false);
     const [assignedUsers, setAssignedUsers] = useState([]);
+    const [editedTempTask, setEditedTempTask] = useState([]);
     const { workboard_id } = useParams();
 
     const handleEdit = () => {
@@ -45,7 +47,7 @@ function EditTask({
             if (data.StatusCode == 6000) {
                 setIsExpanded(false);
                 toast.success("Task Edited successfully");
-                onSave()
+                onSave();
             } else {
                 toast.error(data.message);
             }
@@ -56,9 +58,9 @@ function EditTask({
 
     const taskValidationSchema = Yup.object().shape({
         title: Yup.string().required("Task title is required"),
-        assigned_to: Yup.array()
-            .min(1, "At least one user must be assigned")
-            .required("Assigned to is required"),
+        // assigned_to: Yup.array()
+        //     .min(1, "At least one user must be assigned")
+        //     .required("Assigned to is required"),
         status: Yup.string().required("Status is required"),
     });
 
@@ -68,7 +70,7 @@ function EditTask({
             description: description,
             assigned_to: [],
             status: taskStatus,
-            workboard_id: workboard_id,
+            workboard_id: editTypeTempTask ? "gvhb" : workboard_id,
             task_id: taskid,
         },
         validationSchema: taskValidationSchema,
@@ -76,18 +78,26 @@ function EditTask({
         validateOnMount: true,
 
         onSubmit: (values) => {
-            console.log("submittin");
-            const formdata = new FormData();
 
-            formdata.append("title", values.title);
-            formdata.append("description", values.description);
-            formdata.append("status", values.status);
-            formdata.append("workboard_id", workboard_id);
-            formdata.append("task_id", values.task_id);
-            // formdata.append("assigned_to", JSON.stringify(assignedUsers));
-            formdata.append("assigned_to", JSON.stringify(values.assigned_to));
+            if (!editTypeTempTask) {
+                const formdata = new FormData();
 
-            editTask(formdata);
+                formdata.append("title", values.title);
+                formdata.append("description", values.description);
+                formdata.append("status", values.status);
+                formdata.append("workboard_id", workboard_id);
+                formdata.append("task_id", values.task_id);
+                formdata.append(
+                    "assigned_to",
+                    JSON.stringify(values.assigned_to)
+                );
+                if (!editTypeTempTask) {
+                    formdata.append("workboard_id", workboard_id);
+                }
+                editTask(formdata);
+            } else {
+                onSave(values,taskid);
+            }
         },
     });
 
@@ -96,8 +106,14 @@ function EditTask({
     // }
 
     const handleAssignUsers = (selectedUsers) => {
-        selectedUsers = selectedUsers.map((user) => user.id);
-        tempTaskCreation.setFieldValue("assigned_to", selectedUsers);
+        if (editTypeTempTask) {
+            tempTaskCreation.setFieldValue("assigned_to", selectedUsers);
+            console.log(selectedUsers, "ASSIGNED WITH ID AND USERNAME");
+        } else {
+            selectedUsers = selectedUsers.map((user) => user.id);
+            tempTaskCreation.setFieldValue("assigned_to", selectedUsers);
+            console.log(selectedUsers, "ASSIGNED WITH ID ONLY");
+        }
     };
 
     // useEffect(() => {
@@ -161,7 +177,26 @@ function EditTask({
                 <Cancel type="button" onClick={() => onCancel()}>
                     Cancel
                 </Cancel>
-                <Save type="submit" >Save</Save>
+                {/* {editTypeTempTask ? (
+                    <Save
+                        type="button"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            setEditedTempTask(tempTaskCreation.values);
+                            onSave(editedTempTask);
+                            // console.log(
+                            //     editedTempTask,
+                            //     "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR"
+                            // );
+                        }}
+                    >
+                        Save
+                    </Save>
+                ) : ( */}
+                <Save type="button" onClick={tempTaskCreation.handleSubmit}>
+                    Save
+                </Save>
+                {/* )} */}
             </div>
         </Container>
     );
