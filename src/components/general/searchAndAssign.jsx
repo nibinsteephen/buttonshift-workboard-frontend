@@ -21,6 +21,7 @@ function SearchAndAssign({onAssignUsers, assigned_to}) {
             console.error("Error fetching users:", error);
         }
     };
+    console.log(usersList)
 
     useEffect(() => {
         fetchUserList();
